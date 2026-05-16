@@ -652,7 +652,7 @@
                 onchange="window.location.href='?group={{ selected_group }}&file=' + this.value">
                 {% for tab in file_tabs %}
                 <option value="{{ tab.filename }}" {% if tab.filename==selected_file %}selected{% endif %}>
-                    Неделя: {{ tab.name }}
+                    Неделя {{ tab.name.replace(' ', ': ', 1) if ' ' in tab.name else tab.name + ':' }}
                 </option>
                 {% endfor %}
             </select>
