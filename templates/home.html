@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Главная - Учебный Портал</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #f8faff;
+            --text: #2d3436;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(108, 92, 231, 0.1);
+            --divider: #94a3b8;
+        }
+
+        html.dark-mode {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --white: #1e293b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --divider: #4a5568;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-brand {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .btn-login {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background: var(--accent);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: 0 0 50px 50px;
+            margin-bottom: 50px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .modules-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto 50px;
+        }
+
+        .module-card {
+            width: 100%;
+            max-width: 280px;
+            background: var(--white);
+            padding: 40px 20px;
+            border-radius: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            transition: 0.4s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid transparent;
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .module-card i {
+            font-size: 3rem;
+            color: var(--primary);
+            transition: 0.3s;
+        }
+
+        .module-card:hover i {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .module-card h3 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+        }
+
+        .module-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary);
+            background: var(--bg);
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .navbar-brand span {
+                display: inline;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
+    </script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand"><i class="fa-solid fa-graduation-cap"></i> <span>Гунер.рф</span></a>
+        <div class="navbar-nav">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему"><i
+                    class="fa-solid fa-moon"></i></button>
+            <a href="#" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Войти</a>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>Добро пожаловать</h1>
+        <p>Платформа для общаги и учебы. Всё неофициально, полная свобода!</p>
+    </div>
+
+    <div class="modules-grid">
+        <a href="/schedule" class="module-card">
+            <i class="fa-solid fa-calendar-days"></i>
+            <h3>Расписание пар</h3>
+            <p>Просмотр расписания занятий для всех групп</p>
+        </a>
+        <a href="/exams" class="module-card">
+            <i class="fa-solid fa-skull"></i>
+            <h3>Экзамены</h3>
+            <p>Просмотр расписания экзаменационной сессии</p>
+        </a>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.querySelector('#themeBtn i');
+            html.classList.toggle('dark-mode');
+            if (html.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.classList.contains('dark-mode')) {
+                document.querySelector('#themeBtn i').className = 'fa-solid fa-sun';
+            }
+        });
+    </script>
+</body>
+
+</html>

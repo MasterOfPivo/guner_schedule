@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>{{ page_title }}</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #f8faff;
+            --text: #2d3436;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(108, 92, 231, 0.1);
+            --border: #e2e8f0;
+            --divider: #94a3b8;
+            --day-bg: #f8faff;
+            --hover-bg: #f4f6ff;
+            /* Светлая подсветка для дня */
+        }
+
+        /* 🌙 Цвета для ТЕМНОЙ ТЕМЫ */
+        html.dark-mode {
+            --bg: #0f172a;
+            /* Глубокий темно-синий */
+            --text: #f1f5f9;
+            --white: #1e293b;
+            /* Цвет карточек */
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --border: #334155;
+            --divider: #4a5568;
+            --day-bg: #1e293b;
+            --hover-bg: #2d3a4f;
+            /* Спокойная тёмная подсветка */
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            /* Плавный переход */
+        }
+
+        /* Поправляем специфичные цвета ячеек, чтобы они брали переменные */
+        .table-card {
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        td {
+            border-color: var(--border) !important;
+            color: var(--text);
+        }
+
+        .day-col {
+            background: var(--day-bg) !important;
+            border-right: 3px solid var(--primary) !important;
+            color: var(--primary) !important;
+            font-weight: 800;
+        }
+
+        /* --- КОЛОНКА "ВРЕМЯ" --- */
+        .time-col {
+            background: var(--white) !important;
+            border-right: 2px solid var(--border) !important;
+            color: var(--text) !important;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* Кнопка переключения */
+        .theme-toggle {
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            background: var(--white);
+            box-shadow: var(--shadow);
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(20deg);
+        }
+
+        /* Фиксированная кнопка темы для главной страницы */
+        .theme-toggle-fixed {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        /* --- ГЛАВНАЯ СТРАНИЦА (HOME) --- */
+        .home-hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 0 0 50px 50px;
+            color: white;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .home-hero h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 3.5rem;
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .home-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .search-container {
+            margin: -35px auto 40px;
+            max-width: 600px;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 30px 20px 60px;
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            font-size: 1.1rem;
+            font-family: 'Montserrat', sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-input:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 45px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .group-card {
+            background: var(--white);
+            padding: 30px 20px;
+            border-radius: 25px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .group-card i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .group-card:hover {
+            transform: scale(1.05);
+            background: var(--primary);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .group-card:hover i {
+            color: white;
+        }
+
+        /* --- ВЫПАДАЮЩИЙ СПИСОК НЕДЕЛЬ --- */
+        .file-select-container {
+            margin-bottom: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .file-dropdown {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            background-color: var(--white);
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+            width: 100%;
+            max-width: 400px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c5ce7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 12px auto;
+        }
+
+        .file-dropdown:hover,
+        .file-dropdown:focus {
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(108, 92, 231, 0.2);
+        }
+
+        /* --- СТРАНИЦА ТАБЛИЦЫ --- */
+        .nav-header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .nav-header .btn-back {
+            justify-self: start;
+        }
+
+        .nav-header h2 {
+            justify-self: center;
+            text-align: center;
+        }
+
+        .nav-header .theme-toggle {
+            justify-self: end;
+        }
+
+        .btn-back {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-back:hover {
+            opacity: 0.7;
+            transform: translateX(-5px);
+        }
+
+        .table-card {
+            background: var(--white);
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .exams-table tbody tr td {
+            border-bottom: 2px solid var(--primary) !important;
+        }
+
+        .exams-table tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+
+        .exams-table th.time-col,
+        .exams-table td.time-col {
+            border-right: 2px solid var(--primary) !important;
+        }
+
+        /* 1. Жирная линия ТОЛЬКО между днями (пропускаем первый день) */
+        .day-start {
+            border-top: 3px solid var(--primary) !important;
+        }
+
+        /* 2. Убираем жирный низ у колонки дня, если это последний блок в таблице */
+        /* Чтобы не было "тяжелого" финала у таблицы */
+        .day-col {
+            border-bottom: 1px solid var(--border) !important;
+            /* Делаем стандартным */
+        }
+
+        /* 3. Если хочешь, чтобы колонка дня все же имела четкий низ внутри таблицы, 
+   но не в самом конце, можно оставить так: */
+        /* Выделение блока дня, если нужно */
+        .day-start:not(:last-child) .day-col {
+            border-bottom: 2px solid var(--border) !important;
+        }
+
+        /* 4. Убеждаемся, что у последней строки таблицы обычная тонкая граница */
+        tbody tr:last-child td {
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* --- ОБНОВЛЕННЫЕ СТИЛИ ТАБЛИЦЫ --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            background: var(--white);
+            /* Внешняя рамка всей таблицы */
+            border: 2px solid var(--border);
+        }
+
+        /* Стиль для всех заголовков (шапки) */
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 18px 10px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            /* Четкая темная граница под шапкой */
+            border-bottom: 4px solid #5649c0;
+            /* Тонкие светлые разделители между колонками в шапке */
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Убираем border-right у последнего заголовка */
+        th:last-child {
+            border-right: none;
+        }
+
+        /* Общие стили ячеек */
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        /* --- КОЛОНКА "ДЕНЬ" (САМЫЙ ЖЕСТКИЙ РАЗДЕЛИТЕЛЬ) --- */
+        .day-col {
+            background: var(--day-bg) !important;
+            /* Жирная цветная линия, отделяющая день от времени */
+            border-right: 3px solid var(--primary) !important;
+            color: var(--primary) !important;
+            font-weight: 800;
+            width: 150px;
+        }
+
+        /* --- КОЛОНКА "ВРЕМЯ" --- */
+        .time-col {
+            background: var(--white);
+            /* Четкая линия после времени */
+            border-right: 2px solid var(--border) !important;
+            color: var(--text);
+            font-weight: 700;
+            text-align: center;
+            width: 90px;
+        }
+
+        /* --- УЛЬТРА-КОМПАКТНАЯ МОБИЛЬНАЯ ВЕРСИЯ --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            /* Исправляем наезд заголовка на кнопку назад */
+            .nav-header {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 10px;
+                padding: 10px 0 20px;
+            }
+
+            .nav-header h2 {
+                font-size: 1.1rem;
+                line-height: 1.2;
+            }
+
+            .btn-back {
+                font-size: 0.9rem;
+            }
+
+            /* Таблица: правильное сжатие */
+            .table-card {
+                border-radius: 12px;
+                border: 1px solid var(--border);
+                overflow: hidden;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+            }
+
+            th,
+            td {
+                padding: 8px 4px !important;
+                /* Минимум отступов */
+                font-size: 0.75rem;
+                /* Уменьшаем шрифт */
+            }
+
+            /* Заголовки делаем еще меньше */
+            th {
+                padding: 10px 2px !important;
+                font-size: 0.7rem;
+                overflow: hidden;
+            }
+
+            /* Шапка колонки ДЕНЬ — стили на обёртке внутри th (iOS fix) */
+            th.day-col {
+                padding: 2px 0 !important;
+                overflow: hidden;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            th.day-col span.day-wrapper {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                vertical-align: middle;
+            }
+
+            /* Шапка колонки ВРЕМЯ — мелкий шрифт, горизонтально */
+            th.time-col {
+                white-space: nowrap;
+                overflow: hidden;
+                padding: 10px 1px !important;
+                font-size: 0.55rem;
+                letter-spacing: 0;
+            }
+
+            /* Колонка ДЕНЬ: вертикальный текст */
+            .day-col {
+                width: 32px !important;
+                min-width: 32px;
+                max-width: 32px;
+                border-right: 2px solid var(--primary) !important;
+                overflow: hidden;
+                vertical-align: middle;
+                padding: 4px 0 !important;
+            }
+
+            .day-wrapper {
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                width: 30px;
+            }
+
+            .day-text {
+                font-size: 0.7rem;
+                letter-spacing: 0.5px;
+            }
+
+            /* Колонка ВРЕМЯ: фиксируем ширину */
+            .time-col {
+                width: 46px !important;
+                min-width: unset;
+                font-size: 0.68rem;
+                border-right: 1px solid var(--border) !important;
+                white-space: nowrap;
+                padding-left: 4px !important;
+            }
+
+            /* --- ПЕРЕВОРОТ ДАТЫ В ЭКЗАМЕНАХ --- */
+            .exams-table .time-col {
+                width: 32px !important;
+                min-width: 32px !important;
+                max-width: 32px !important;
+                padding: 4px 0 !important;
+                vertical-align: middle;
+            }
+
+            .exams-table .time-wrapper {
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+                text-align: center;
+                white-space: nowrap;
+                width: 30px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .exams-table .time-text {
+                font-size: 0.75rem;
+                letter-spacing: 0.5px;
+            }
+
+            /* Текст пар: занимает всю оставшуюся ширину */
+            .subject-cell {
+                line-height: 1.3;
+                word-break: break-word;
+                overflow-wrap: break-word;
+                overflow: hidden;
+            }
+
+            /* Подгруппы внутри ячеек (наш flex) */
+            td div[style*="display: flex"] {
+                flex-direction: column !important;
+            }
+
+            td div[style*="border-right"] {
+                border-right: none !important;
+                border-bottom: 1px dashed var(--divider) !important;
+                padding-bottom: 5px !important;
+                margin-bottom: 5px !important;
+            }
+        }
+
+        /* Эффект при наведении на строку (зебра) */
+        tbody tr:hover {
+            background-color: var(--hover-bg) !important;
+        }
+    </style>
+    <script>
+        // Применяем тему до рендера body, чтобы избежать белой вспышки
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+</head>
+
+<body>
+
+    {% if not selected_group %}
+    <button class="theme-toggle theme-toggle-fixed" onclick="toggleTheme()" id="themeBtn" title="Переключить тему">
+        <i class="fa-solid fa-moon"></i>
+    </button>
+
+    <div class="home-hero" style="position: relative;">
+        <a href="/"
+            style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-weight: 600; font-size: 1.1rem; opacity: 0.9; transition: 0.2s;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
+            <i class="fa-solid fa-arrow-left"></i> На главную
+        </a>
+        <h1>{{ page_title }}</h1>
+    </div>
+
+    <div class="search-container">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="groupSearch" class="search-input" placeholder="Поиск группы" onkeyup="filterGroups()">
+    </div>
+
+    <div class="container">
+        {% for course in groups_by_course %}
+        <div class="course-section" style="margin-bottom: 40px;">
+            <h2
+                style="font-family: 'Nunito', sans-serif; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+                {{ course.title }}</h2>
+            <div class="group-grid">
+                {% for g in course.groups %}
+                <a href="?group={{ g }}" class="group-card">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>{{ g }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function filterGroups() {
+            let input = document.getElementById('groupSearch').value.toUpperCase();
+            let cards = document.getElementsByClassName('group-card');
+
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].getElementsByTagName('span')[0].innerText;
+                if (name.toUpperCase().indexOf(input) > -1) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+
+            let sections = document.getElementsByClassName('course-section');
+            for (let i = 0; i < sections.length; i++) {
+                let hasVisible = false;
+                let sectionCards = sections[i].getElementsByClassName('group-card');
+                for (let j = 0; j < sectionCards.length; j++) {
+                    if (sectionCards[j].style.display !== "none") {
+                        hasVisible = true;
+                        break;
+                    }
+                }
+                sections[i].style.display = hasVisible ? "" : "none";
+            }
+        }
+    </script>
+
+
+    {% else %}
+    <div class="container">
+        <div class="nav-header">
+            <a href="{{ url_for('schedule' if schedule_type == 'classes' else 'exams') }}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> К группам
+            </a>
+            <h2 style="margin:0; font-family: 'Nunito'; color: var(--primary);">Группа: {{ selected_group }}</h2>
+
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+
+        {% if schedule_type == 'classes' %}
+        <div class="file-select-container">
+            <select class="file-dropdown"
+                onchange="window.location.href='?group={{ selected_group }}&file=' + this.value">
+                {% for tab in file_tabs %}
+                <option value="{{ tab.filename }}" {% if tab.filename==selected_file %}selected{% endif %}>
+                    Неделя: {{ tab.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        {% if rows|length == 0 %}
+        <div
+            style="text-align: center; padding: 40px; background: var(--white); border-radius: 30px; box-shadow: var(--shadow);">
+            <h3 style="margin-bottom: 10px;">На этой неделе пар нет</h3>
+        </div>
+        {% else %}
+        <div class="table-card">
+            <table id="scheduleTable" class="{% if schedule_type == 'exams' %}exams-table{% endif %}">
+                <thead>
+                    <tr>
+                        {% if schedule_type == 'classes' %}
+                        <th class="day-col"><span class="day-wrapper">День</span></th>
+                        {% endif %}
+                        <th class="time-col">{{ time_col_name }}</th>
+                        {% for g in header_groups %}
+                        <th>{{ g }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="{% if row.rowspan > 0 %}day-start{% endif %}">
+                        {% if schedule_type == 'classes' %}
+                        {% if row.rowspan > 0 %}
+                        <td class="day-col" rowspan="{{ row.rowspan }}">
+                            <div class="day-wrapper">
+                                <div class="day-text">{{ row.day|safe }}</div>
+                            </div>
+                        </td>
+                        {% endif %}
+                        {% endif %}
+                        <td class="time-col">
+                            {% if schedule_type == 'exams' %}
+                            <div class="time-wrapper">
+                                <div class="time-text">{{ row.time }}</div>
+                            </div>
+                            {% else %}
+                            {{ row.time }}
+                            {% endif %}
+                        </td>
+                        {% for cell in row.cells %}
+                        <td class="subject-cell">{{ cell|safe }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            const icon = btn.querySelector('i');
+
+            html.classList.toggle('dark-mode');
+
+            if (html.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+        }
+
+        // Устанавливаем правильную иконку при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('themeBtn');
+            if (document.documentElement.classList.contains('dark-mode') && btn) {
+                btn.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+    </script>
+</body>
+
+</html>
