@@ -10,3 +10,4 @@ node_modules/
 
 # Локальные переменные окружения и ключи
 *.env
+schedules.db

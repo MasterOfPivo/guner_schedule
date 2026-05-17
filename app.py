@@ -391,6 +391,7 @@ def render_schedule_page(schedule_type):
 
     selected_group = request.args.get('group')
     selected_file = request.args.get('file')
+    show_empty = request.args.get('show_empty', request.cookies.get('show_empty', '0')) == '1'
 
     if selected_group and not selected_file:
         for f in available_files:
@@ -406,7 +407,8 @@ def render_schedule_page(schedule_type):
                                groups_by_course=structured_groups, 
                                selected_group=None,
                                page_title=page_title,
-                               schedule_type=schedule_type)
+                               schedule_type=schedule_type,
+                               show_empty=show_empty)
 
     schedule_data, group_mapping = get_processed_data(selected_file)
     
@@ -417,65 +419,76 @@ def render_schedule_page(schedule_type):
     
     rows_to_render = []
     
-    for row in schedule_data:
-        # 1. Проверяем, есть ли пары у нужных групп (чтобы не рисовать пустые строки времени)
-        has_any_class = False
-        for g_name in groups_to_show:
-            for c in group_mapping[g_name]:
-                if row['cells_info'][c]['value']:
-                    has_any_class = True
+    # Проверяем, есть ли хоть одна пара на всей неделе
+    has_any_class_on_week = False
+    if selected_group:
+        for row in schedule_data:
+            for g_name in groups_to_show:
+                for c in group_mapping[g_name]:
+                    if row['cells_info'][c]['value']:
+                        has_any_class_on_week = True
+                        break
+                if has_any_class_on_week:
                     break
-            if has_any_class:
-                break
-                
-        if selected_group and not has_any_class:
-            continue
+                    
+    if not selected_group or has_any_class_on_week:
+        for row in schedule_data:
+            has_any_class = False
+            for g_name in groups_to_show:
+                for c in group_mapping[g_name]:
+                    if row['cells_info'][c]['value']:
+                        has_any_class = True
+                        break
+                if has_any_class:
+                    break
             
-        # Убираем год из даты (напр. 12.05.2026 → 12.05)
-        day_display = re.sub(r'\.\d{4}', '', row['day']).replace('\n', '<br>')
-        
-        row_data = {
-            'day': day_display,
-            'time': row['time'],
-            'cells': []
-        }
-        
-        # 2. Формируем ячейки с учетом объединений из Excel
-        for g_name in groups_to_show:
-            col_indices = group_mapping[g_name]
-            vals = []
-            is_merged_across = False
+            # Убираем год из даты (напр. 12.05.2026 → 12.05)
+            day_display = re.sub(r'\.\d{4}', '', row['day']).replace('\n', '<br>')
             
-            first_col = col_indices[0]
-            last_col = col_indices[-1]
+            row_data = {
+                'day': day_display,
+                'time': row['time'],
+                'cells': [],
+                'is_empty': not has_any_class
+            }
             
-            first_cell_info = row['cells_info'][first_col]
-            # 🐾 Если ячейка объединена от первой до последней колонки подгруппы - это общая лекция!
-            if first_cell_info['merged_min'] <= first_col and first_cell_info['merged_max'] >= last_col:
-                is_merged_across = True
+            # 2. Формируем ячейки с учетом объединений из Excel
+            for g_name in groups_to_show:
+                col_indices = group_mapping[g_name]
+                vals = []
+                is_merged_across = False
                 
-            for c in col_indices:
-                v = row['cells_info'][c]['value']
-                vals.append(v.replace('\n', '<br>'))
+                first_col = col_indices[0]
+                last_col = col_indices[-1]
                 
-            if all(v == "" for v in vals):
-                cell_html = "" # Окно (пар нет)
-            elif is_merged_across:
-                # Выводим общую пару на всю ширину без полосок
-                cell_html = f"<div style='padding: 4px 10px;'>{vals[0]}</div>"
-            else:
-                # Разделяем на колонки с пунктиром!
-                cols_html = []
-                for i, v in enumerate(vals):
-                    border = "border-right: 2px dashed #94a3b8;" if i < len(vals) - 1 else ""
-                    content = v if v != "" else "&nbsp;"
-                    cols_html.append(f"<div style='flex: 1; padding: 4px 10px; {border}'>{content}</div>")
+                first_cell_info = row['cells_info'][first_col]
+                # 🐾 Если ячейка объединена от первой до последней колонки подгруппы - это общая лекция!
+                if first_cell_info['merged_min'] <= first_col and first_cell_info['merged_max'] >= last_col:
+                    is_merged_across = True
+                    
+                for c in col_indices:
+                    v = row['cells_info'][c]['value']
+                    v_clean = re.sub(r'\s+', ' ', v).strip()
+                    vals.append(v_clean)
+                    
+                if all(v == "" for v in vals):
+                    cell_html = "<div class='window-slot'><i class='fa-solid fa-mug-hot'></i>Отдых</div>" # Окно (пар нет)
+                elif is_merged_across:
+                    # Выводим общую пару на всю ширину без полосок
+                    cell_html = f"<div class='single-class'>{vals[0]}</div>"
+                else:
+                    # Разделяем на колонки с пунктиром!
+                    cols_html = []
+                    for i, v in enumerate(vals):
+                        border = "border-right: 2px dashed var(--border);" if i < len(vals) - 1 else ""
+                        content = v if v != "" else "<div style='display: flex; align-items: center; justify-content: center; height: 100%; color: var(--divider); opacity: 0.4; font-size: 0.8rem;'><i class='fa-solid fa-mug-hot'></i></div>"
+                        cols_html.append(f"<div class='subgroup-column' style='{border}'>{content}</div>")
+                    
+                    cell_html = f"<div class='subgroup-container'>{''.join(cols_html)}</div>"
+                    
+                row_data['cells'].append(cell_html)
                 
-                cell_html = f"<div style='display: flex; width: 100%; min-height: 100%; margin: -4px -10px;'>{''.join(cols_html)}</div>"
-                
-            row_data['cells'].append(cell_html)
-            
-        rows_to_render.append(row_data)
+            rows_to_render.append(row_data)
 
     # 3. Рассчитываем rowspan для объединения ячеек "Дня недели"
     for i, row in enumerate(rows_to_render):
@@ -504,7 +517,8 @@ def render_schedule_page(schedule_type):
                                  header_groups=groups_to_show,
                                  page_title=page_title,
                                  time_col_name=time_col_name,
-                                 schedule_type=schedule_type)
+                                 schedule_type=schedule_type,
+                                 show_empty=show_empty)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, threaded=True)

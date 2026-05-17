@@ -538,22 +538,158 @@
                 overflow: hidden;
             }
 
-            /* Подгруппы внутри ячеек (наш flex) */
-            td div[style*="display: flex"] {
+            /* Подгруппы внутри ячеек */
+            .subgroup-container {
                 flex-direction: column !important;
             }
 
-            td div[style*="border-right"] {
+            .subgroup-column {
                 border-right: none !important;
-                border-bottom: 1px dashed var(--divider) !important;
-                padding-bottom: 5px !important;
-                margin-bottom: 5px !important;
+                border-bottom: 1px dashed var(--border) !important;
+                padding: 8px 12px !important;
+            }
+            .subgroup-column:last-child {
+                border-bottom: none !important;
+            }
+
+            .single-class {
+                padding: 8px 12px !important;
+            }
+
+            .window-slot {
+                margin: 6px;
+                padding: 8px;
+                min-height: 42px;
+                font-size: 0.75rem;
+            }
+
+            /* Адаптив для кнопки Окна */
+            .toggle-btn .btn-text {
+                display: none;
+            }
+            .toggle-btn {
+                padding: 10px;
+                border-radius: 50%;
+                width: 45px;
+                height: 45px;
+                justify-content: center;
+                align-items: center;
             }
         }
 
         /* Эффект при наведении на строку (зебра) */
         tbody tr:hover {
             background-color: var(--hover-bg) !important;
+        }
+
+        body.hide-empty .empty-row {
+            display: none !important;
+        }
+
+        /* --- КНОПКА ТУГГЛЕРА ОКН --- */
+        .toggle-btn {
+            cursor: pointer;
+            padding: 10px 18px;
+            border-radius: 20px;
+            background: var(--white);
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.15);
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .toggle-btn.active:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            color: white;
+        }
+
+        /* --- СТИЛЬ ПУСТЫХ ЯЧЕЕК (ОКНА) --- */
+        .window-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(148, 163, 184, 0.04);
+            border: 2px dashed rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 48px;
+            transition: all 0.3s ease;
+            user-select: none;
+            margin: 10px;
+        }
+        
+        html.dark-mode .window-slot {
+            color: #64748b;
+            background: rgba(100, 116, 139, 0.04);
+            border-color: rgba(100, 116, 139, 0.15);
+        }
+
+        .window-slot:hover {
+            background: rgba(108, 92, 231, 0.08);
+            border-color: var(--primary-light);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+        
+        html.dark-mode .window-slot:hover {
+            background: rgba(162, 155, 254, 0.1);
+            border-color: var(--primary-light);
+            color: var(--primary-light);
+        }
+
+        /* --- ВЫРАВНИВАНИЕ ЯЧЕЕК И ПОДГРУПП --- */
+        .subject-cell {
+            padding: 0 !important;
+            height: 1px; /* Позволяет flex-дочерним элементам растягиваться по высоте */
+        }
+
+        .single-class {
+            padding: 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            line-height: 1.4;
+        }
+
+        .subgroup-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            align-items: stretch;
+        }
+
+        .subgroup-column {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1.4;
         }
     </style>
     <script>
@@ -564,7 +700,7 @@
     </script>
 </head>
 
-<body>
+<body class="{% if not show_empty %}hide-empty{% endif %}">
 
     {% if not selected_group %}
     <button class="theme-toggle theme-toggle-fixed" onclick="toggleTheme()" id="themeBtn" title="Переключить тему">
@@ -641,9 +777,17 @@
             </a>
             <h2 style="margin:0; font-family: 'Nunito'; color: var(--primary);">Группа: {{ selected_group }}</h2>
 
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
-                <i class="fa-solid fa-moon"></i>
-            </button>
+            <div style="display: flex; gap: 10px; justify-self: end; align-items: center;">
+                {% if schedule_type == 'classes' %}
+                <button class="toggle-btn {% if show_empty %}active{% endif %}" onclick="toggleShowEmpty()" id="emptyBtn" title="Показать/скрыть пустые ячейки (окна)">
+                    <i class="fa-solid fa-mug-hot"></i>
+                    <span class="btn-text">Окна: {% if show_empty %}Показаны{% else %}Скрыты{% endif %}</span>
+                </button>
+                {% endif %}
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
         </div>
 
         {% if schedule_type == 'classes' %}
@@ -662,7 +806,13 @@
         {% if rows|length == 0 %}
         <div
             style="text-align: center; padding: 40px; background: var(--white); border-radius: 30px; box-shadow: var(--shadow);">
-            <h3 style="margin-bottom: 10px;">На этой неделе пар нет</h3>
+            <h3 style="margin-bottom: 10px;">
+                {% if schedule_type == 'exams' %}
+                У вас нет расписания экзаменов
+                {% else %}
+                На этой неделе пар нет
+                {% endif %}
+            </h3>
         </div>
         {% else %}
         <div class="table-card">
@@ -680,15 +830,13 @@
                 </thead>
                 <tbody>
                     {% for row in rows %}
-                    <tr class="{% if row.rowspan > 0 %}day-start{% endif %}">
+                    <tr data-day="{{ row.day|safe }}" class="{% if row.is_empty %}empty-row{% endif %}">
                         {% if schedule_type == 'classes' %}
-                        {% if row.rowspan > 0 %}
-                        <td class="day-col" rowspan="{{ row.rowspan }}">
+                        <td class="day-col">
                             <div class="day-wrapper">
                                 <div class="day-text">{{ row.day|safe }}</div>
                             </div>
                         </td>
-                        {% endif %}
                         {% endif %}
                         <td class="time-col">
                             {% if schedule_type == 'exams' %}
@@ -727,13 +875,110 @@
             }
         }
 
-        // Устанавливаем правильную иконку при загрузке страницы
+        // Устанавливаем правильную иконку при загрузке страницы и делаем первоначальный расчет rowspan
         window.addEventListener('DOMContentLoaded', function () {
             const btn = document.getElementById('themeBtn');
             if (document.documentElement.classList.contains('dark-mode') && btn) {
                 btn.querySelector('i').classList.replace('fa-moon', 'fa-sun');
             }
+            // Выравниваем rowspan при загрузке
+            updateRowspans();
         });
+
+        function toggleShowEmpty() {
+            const isHidden = document.body.classList.contains('hide-empty');
+            const newValue = isHidden ? "1" : "0";
+            document.cookie = "show_empty=" + newValue + "; path=/; max-age=31536000";
+            
+            // Если в URL есть параметр show_empty, обновим его в истории, но не будем перезагружать страницу!
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('show_empty')) {
+                url.searchParams.set('show_empty', newValue);
+                window.history.replaceState({}, '', url.toString());
+            }
+
+            applyShowEmpty(newValue === '1');
+        }
+
+        function applyShowEmpty(show) {
+            const body = document.body;
+            const btn = document.getElementById('emptyBtn');
+            
+            if (show) {
+                body.classList.remove('hide-empty');
+                if (btn) {
+                    btn.classList.add('active');
+                    const btnText = btn.querySelector('.btn-text');
+                    if (btnText) btnText.textContent = "Окна: Показаны";
+                }
+            } else {
+                body.classList.add('hide-empty');
+                if (btn) {
+                    btn.classList.remove('active');
+                    const btnText = btn.querySelector('.btn-text');
+                    if (btnText) btnText.textContent = "Окна: Скрыты";
+                }
+            }
+            
+            updateRowspans();
+        }
+
+        function updateRowspans() {
+            const table = document.getElementById('scheduleTable');
+            if (!table) return;
+            
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            
+            // Находим все видимые строки (у которых display не none)
+            // Исключаем те, которые скрыты из-за класса empty-row при hide-empty
+            const isHideEmpty = document.body.classList.contains('hide-empty');
+            const visibleRows = rows.filter(row => {
+                if (isHideEmpty && row.classList.contains('empty-row')) {
+                    return false;
+                }
+                return true;
+            });
+            
+            // Группируем строки по дням
+            const days = {};
+            visibleRows.forEach(row => {
+                const day = row.getAttribute('data-day');
+                if (!day) return;
+                if (!days[day]) {
+                    days[day] = [];
+                }
+                days[day].push(row);
+            });
+            
+            // Для всех строк сначала убираем day-start и скрываем ячейку дня
+            rows.forEach(row => {
+                row.classList.remove('day-start');
+                const dayCell = row.querySelector('.day-col');
+                if (dayCell) {
+                    dayCell.style.display = 'none';
+                }
+            });
+            
+            // Для каждого дня настраиваем видимость ячейки дня и её rowspan
+            for (const day in days) {
+                const dayRows = days[day];
+                dayRows.forEach((row, index) => {
+                    const dayCell = row.querySelector('.day-col');
+                    if (!dayCell) return;
+                    
+                    if (index === 0) {
+                        // Первая видимая строка этого дня показывает ячейку
+                        dayCell.style.display = '';
+                        dayCell.setAttribute('rowspan', dayRows.length);
+                        // Добавляем класс day-start для жирной верхней линии
+                        row.classList.add('day-start');
+                    } else {
+                        // Остальные строки скрывают ячейку дня
+                        dayCell.style.display = 'none';
+                    }
+                });
+            }
+        }
     </script>
 </body>
 
