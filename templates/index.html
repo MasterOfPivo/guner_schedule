@@ -57,6 +57,83 @@
             /* Плавный переход */
         }
 
+        /* --- ШАПКА / НАВИГАЦИЯ --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-brand {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .btn-login {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background: var(--accent);
+        }
+
+        .navbar .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            box-shadow: none;
+        }
+
+        .navbar .theme-toggle:hover {
+            color: var(--primary);
+            background: var(--bg);
+            transform: none;
+        }
+
         /* Поправляем специфичные цвета ячеек, чтобы они брали переменные */
         .table-card {
             background: var(--white);
@@ -394,6 +471,27 @@
 
         /* --- УЛЬТРА-КОМПАКТНАЯ МОБИЛЬНАЯ ВЕРСИЯ --- */
         @media (max-width: 768px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .navbar-brand span {
+                display: inline;
+                font-size: 1.2rem;
+            }
+
+            .btn-login {
+                width: 45px;
+                height: 45px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 50%;
+            }
+
+            .btn-login span {
+                display: none;
+            }
+
             .container {
                 padding: 10px;
             }
@@ -701,12 +799,16 @@
 </head>
 
 <body class="{% if not show_empty %}hide-empty{% endif %}">
+    <nav class="navbar">
+        <a href="/" class="navbar-brand"><i class="fa-solid fa-graduation-cap"></i> <span>Гунер.рф</span></a>
+        <div class="navbar-nav">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему"><i
+                    class="fa-solid fa-moon"></i></button>
+            <a href="#" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> <span>Войти</span></a>
+        </div>
+    </nav>
 
     {% if not selected_group %}
-    <button class="theme-toggle theme-toggle-fixed" onclick="toggleTheme()" id="themeBtn" title="Переключить тему">
-        <i class="fa-solid fa-moon"></i>
-    </button>
-
     <div class="home-hero" style="position: relative;">
         <a href="/"
             style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-weight: 600; font-size: 1.1rem; opacity: 0.9; transition: 0.2s;"
@@ -784,9 +886,6 @@
                     <span class="btn-text">Окна: {% if show_empty %}Показаны{% else %}Скрыты{% endif %}</span>
                 </button>
                 {% endif %}
-                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
             </div>
         </div>
 

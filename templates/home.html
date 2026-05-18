@@ -211,6 +211,18 @@
                 display: inline;
                 font-size: 1.2rem;
             }
+
+            .btn-login {
+                width: 45px;
+                height: 45px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 50%;
+            }
+
+            .btn-login span {
+                display: none;
+            }
         }
     </style>
     <script>
@@ -224,7 +236,7 @@
         <div class="navbar-nav">
             <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему"><i
                     class="fa-solid fa-moon"></i></button>
-            <a href="#" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Войти</a>
+            <a href="#" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> <span>Войти</span></a>
         </div>
     </nav>
 
