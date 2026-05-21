@@ -277,6 +277,20 @@
                 display: none;
             }
         }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px 40px 0;
+            transition: 0.3s;
+        }
+        .btn-back:hover {
+            color: var(--primary);
+        }
     </style>
     <script>
         if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
@@ -303,21 +317,23 @@
         </div>
     </nav>
 
-    <div class="hero">
-        <h1>Добро пожаловать</h1>
-        <p>Платформа для общаги и учебы. Всё неофициально, полная свобода!</p>
+    <a href="/" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Назад на главную</a>
+
+    <div class="hero" style="padding: 40px 20px; border-radius: 0 0 50px 50px; margin-top: 20px;">
+        <h1>Выбор расписания</h1>
+        <p>Выберите, какое расписание вы хотите посмотреть</p>
     </div>
 
     <div class="modules-grid">
-        <a href="/schedule_hub" class="module-card">
-            <i class="fa-solid fa-calendar-days"></i>
-            <h3>Расписание</h3>
-            <p>Просмотр расписания пар и экзаменов</p>
+        <a href="/schedule" class="module-card">
+            <i class="fa-solid fa-book-open"></i>
+            <h3>Расписание пар</h3>
+            <p>Просмотр расписания занятий для всех групп</p>
         </a>
-        <a href="/dorm_services" class="module-card">
-            <i class="fa-solid fa-building-user"></i>
-            <h3>Общага.Услуги</h3>
-            <p>Сервисы для проживающих в общежитии</p>
+        <a href="/exams" class="module-card">
+            <i class="fa-solid fa-skull"></i>
+            <h3>Экзамены</h3>
+            <p>Просмотр расписания экзаменационной сессии</p>
         </a>
     </div>
 

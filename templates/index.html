@@ -471,6 +471,10 @@
 
         /* --- УЛЬТРА-КОМПАКТНАЯ МОБИЛЬНАЯ ВЕРСИЯ --- */
         @media (max-width: 768px) {
+            .home-hero h1 {
+                font-size: 2.2rem;
+            }
+
             .navbar {
                 padding: 15px 20px;
             }
@@ -488,8 +492,13 @@
                 border-radius: 50%;
             }
 
-            .btn-login span {
+            .btn-login span, .user-name {
                 display: none;
+            }
+
+            .btn-login {
+                width: 40px;
+                height: 40px;
             }
 
             .container {
@@ -721,6 +730,59 @@
             color: white;
         }
 
+        .user-widget {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 0.95rem;
+            font-family: 'Nunito', sans-serif;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }
+
+        .btn-logout:hover {
+            color: var(--primary);
+            background: var(--bg);
+        }
+
         /* --- СТИЛЬ ПУСТЫХ ЯЧЕЕК (ОКНА) --- */
         .window-slot {
             display: flex;
@@ -804,16 +866,26 @@
         <div class="navbar-nav">
             <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему"><i
                     class="fa-solid fa-moon"></i></button>
-            <a href="#" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> <span>Войти</span></a>
+            {% if current_user.is_authenticated %}
+            <a href="/profile" class="user-widget" title="Личный кабинет">
+                <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                <span class="user-name">{{ current_user.username }}</span>
+            </a>
+            <a href="/logout" class="btn-logout" title="Выйти">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+            {% else %}
+            <a href="/login" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> <span>Войти</span></a>
+            {% endif %}
         </div>
     </nav>
 
     {% if not selected_group %}
     <div class="home-hero" style="position: relative;">
-        <a href="/"
+        <a href="/schedule_hub"
             style="position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-weight: 600; font-size: 1.1rem; opacity: 0.9; transition: 0.2s;"
             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
-            <i class="fa-solid fa-arrow-left"></i> На главную
+            <i class="fa-solid fa-arrow-left"></i> Назад
         </a>
         <h1>{{ page_title }}</h1>
     </div>
@@ -880,12 +952,10 @@
             <h2 style="margin:0; font-family: 'Nunito'; color: var(--primary);">Группа: {{ selected_group }}</h2>
 
             <div style="display: flex; gap: 10px; justify-self: end; align-items: center;">
-                {% if schedule_type == 'classes' %}
                 <button class="toggle-btn {% if show_empty %}active{% endif %}" onclick="toggleShowEmpty()" id="emptyBtn" title="Показать/скрыть пустые ячейки (окна)">
                     <i class="fa-solid fa-mug-hot"></i>
                     <span class="btn-text">Окна: {% if show_empty %}Показаны{% else %}Скрыты{% endif %}</span>
                 </button>
-                {% endif %}
             </div>
         </div>
 

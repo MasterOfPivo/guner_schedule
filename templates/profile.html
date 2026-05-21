@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет — Гунер.рф</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
+    </script>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #f8faff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(108, 92, 231, 0.1);
+            --border: #e2e8f0;
+            --input-bg: #f1f5f9;
+        }
+
+        html.dark-mode {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --white: #1e293b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --border: #334155;
+            --input-bg: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-brand {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 800;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text);
+            cursor: pointer;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary);
+            background: var(--bg);
+        }
+
+        .btn-back-nav {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-back-nav:hover {
+            color: var(--primary);
+        }
+
+        /* HERO */
+        .profile-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 50px 20px 50px;
+            text-align: center;
+            position: relative;
+        }
+
+        .avatar-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: white;
+            margin: 0 auto 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-hero h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .profile-hero .hero-sub {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .status-badge.confirmed {
+            background: rgba(0, 206, 201, 0.25);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.4);
+        }
+
+        .status-badge.unconfirmed {
+            background: rgba(255, 118, 117, 0.25);
+            color: #ff7675;
+            border: 1px solid rgba(255, 118, 117, 0.4);
+        }
+
+        /* CARDS */
+        .content {
+            max-width: 700px;
+            margin: 30px auto 40px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .card-title {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* QUICK LINKS - removed */
+
+        /* DANGER ZONE */
+        .btn-logout-full {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 2px solid #ff7675;
+            background: none;
+            color: #ff7675;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-logout-full:hover {
+            background: #ff7675;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 14px 16px;
+            }
+
+            .quick-links {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .profile-hero {
+                padding: 40px 20px 70px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand"><i class="fa-solid fa-graduation-cap"></i> <span>Гунер.рф</span></a>
+        <div class="navbar-nav">
+            <a href="/" class="btn-back-nav"><i class="fa-solid fa-arrow-left"></i> На главную</a>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="profile-hero">
+        <div class="avatar-ring">{{ current_user.username[0].upper() }}</div>
+        <h1>{{ current_user.username }}</h1>
+        <div class="hero-sub">{{ current_user.email }}</div>
+    </div>
+
+    <div class="content">
+
+        <!-- Информация -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-id-card"></i> Информация</div>
+            <div class="info-row">
+                <span class="info-label">Имя пользователя</span>
+                <span class="info-value">{{ current_user.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ current_user.email }}</span>
+            </div>
+
+            {% if current_user.created_at %}
+            <div class="info-row">
+                <span class="info-label">Дата регистрации</span>
+                <span class="info-value">{{ current_user.created_at.strftime('%d.%m.%Y') }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Выход -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-right-from-bracket"></i> Сессия</div>
+            <a href="/logout" class="btn-logout-full">
+                <i class="fa-solid fa-right-from-bracket"></i> Выйти из аккаунта
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            const icon = btn.querySelector('i');
+            html.classList.toggle('dark-mode');
+            if (html.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.classList.contains('dark-mode')) {
+                document.querySelector('#themeBtn i').classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+    </script>
+</body>
+
+</html>

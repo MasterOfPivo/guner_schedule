@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подача чека общаги - Гунер.рф</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #f8faff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --white: #ffffff;
+            --shadow: 0 15px 35px rgba(108, 92, 231, 0.15);
+            --border: #e2e8f0;
+            --input-bg: #f1f5f9;
+        }
+
+        html.dark-mode {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --white: #1e293b;
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --border: #334155;
+            --input-bg: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Анимированные круги на фоне */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            opacity: 0.1;
+            z-index: 0;
+            filter: blur(50px);
+            animation: float 10s ease-in-out infinite alternate;
+        }
+
+        .circle-1 {
+            width: 350px;
+            height: 350px;
+            top: -100px;
+            right: -100px;
+        }
+
+        .circle-2 {
+            width: 400px;
+            height: 400px;
+            bottom: -150px;
+            left: -150px;
+            animation-delay: -3s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(30px) scale(1.1);
+            }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--white);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            z-index: 1;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, background 0.3s, border-color 0.3s;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-back:hover {
+            opacity: 0.8;
+            transform: translateX(-3px);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .brand-logo {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+
+        .brand-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 18px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border-radius: 15px;
+            border: 2px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+        }
+
+        .form-input:focus+i {
+            color: var(--primary);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.25);
+            transition: all 0.3s;
+            margin-bottom: 25px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(108, 92, 231, 0.35);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .signup-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: opacity 0.2s;
+        }
+
+        .signup-link a:hover {
+            opacity: 0.8;
+        }
+
+        /* Кнопка смены темы */
+        .theme-btn-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--white);
+            border: 1px solid var(--border);
+            font-size: 1.2rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
+    </script>
+</head>
+
+<body>
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+
+    <div class="theme-btn-container">
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Переключить тему">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </div>
+
+    <div class="login-container">
+        <a href="/dorm_services" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Назад к услугам
+        </a>
+
+        <div class="brand-header">
+            <a href="/" class="brand-logo">
+                <i class="fa-solid fa-graduation-cap"></i> Гунер.рф
+            </a>
+            <div class="brand-subtitle">Неофициальный портал для учёбы и отдыха</div>
+        </div>
+
+        <style>
+            .alert-custom {
+                padding: 10px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                text-align: center;
+                color: white;
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+            .alert-success {
+                background-color: var(--primary-light);
+            }
+
+            .alert-danger,
+            .alert-error {
+                background-color: #ff7675;
+            }
+
+            .alert-warning {
+                background-color: #f39c12;
+            }
+
+            .alert-info {
+                background-color: #3498db;
+            }
+        </style>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="flash-messages-container">
+            {% for category, message in messages %}
+            <div class="alert-custom alert-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Автоматически убираем сообщение через 5 секунд
+            setTimeout(() => {
+                const container = document.getElementById('flash-messages-container');
+                if (container) {
+                    container.style.transition = 'opacity 0.5s';
+                    container.style.opacity = '0';
+                    setTimeout(() => container.remove(), 500);
+                }
+            }, 5000);
+
+            // Убираем сообщение, если юзер вернулся на страницу кнопкой "Назад"
+            window.addEventListener('pageshow', (e) => {
+                if (e.persisted) {
+                    const container = document.getElementById('flash-messages-container');
+                    if (container) container.remove();
+                }
+            });
+        </script>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('submit_receipt') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label">Период оплаты</label>
+                <div class="input-wrapper">
+                    <input type="text" name="period" class="form-input" placeholder="Сентябрь - Декабрь 2026" required>
+                    <i class="fa-solid fa-calendar-alt"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Файл платежного поручения</label>
+                <div class="input-wrapper">
+                    <input type="file" name="receipt" class="form-input" accept=".pdf,image/*" required
+                        style="padding-left: 50px; padding-top: 11px;">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Отправить на проверку</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            const icon = btn.querySelector('i');
+
+            html.classList.toggle('dark-mode');
+
+            if (html.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('themeBtn');
+            if (document.documentElement.classList.contains('dark-mode') && btn) {
+                btn.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+    </script>
+</body>
+
+</html>

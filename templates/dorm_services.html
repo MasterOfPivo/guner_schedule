@@ -36,6 +36,12 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             background: var(--bg);
@@ -276,6 +282,28 @@
             .btn-login span {
                 display: none;
             }
+
+            .btn-back {
+                margin: 15px 16px 0;
+            }
+
+            .alert-custom {
+                width: 90%;
+            }
+        }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px 40px 0;
+            transition: 0.3s;
+        }
+        .btn-back:hover {
+            color: var(--primary);
         }
     </style>
     <script>
@@ -303,22 +331,88 @@
         </div>
     </nav>
 
-    <div class="hero">
-        <h1>Добро пожаловать</h1>
-        <p>Платформа для общаги и учебы. Всё неофициально, полная свобода!</p>
+    <a href="/" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Назад на главную</a>
+
+    <div class="hero" style="padding: 40px 20px; border-radius: 0 0 50px 50px; margin-top: 20px; margin-bottom: 30px;">
+        <h1>Общага.Услуги</h1>
+        <p>Сервисы для проживающих в общежитии</p>
     </div>
 
+    <style>
+        .alert-custom {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+            animation: fadeInDown 0.4s ease-out forwards;
+        }
+        .alert-success { background: var(--primary-light); }
+        .alert-danger, .alert-error { background: #ff7675; }
+        .alert-warning { background: #f39c12; }
+        .alert-info { background: #3498db; }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="flash-messages-container">
+        {% for category, message in messages %}
+        <div class="alert-custom alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        setTimeout(() => {
+            const container = document.getElementById('flash-messages-container');
+            if (container) {
+                container.style.transition = 'opacity 0.5s';
+                container.style.opacity = '0';
+                setTimeout(() => container.remove(), 500);
+            }
+        }, 5000);
+        
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                const container = document.getElementById('flash-messages-container');
+                if (container) container.remove();
+            }
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+
     <div class="modules-grid">
-        <a href="/schedule_hub" class="module-card">
-            <i class="fa-solid fa-calendar-days"></i>
-            <h3>Расписание</h3>
-            <p>Просмотр расписания пар и экзаменов</p>
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <a href="/admin_receipts" class="module-card" style="border-color: var(--accent);">
+            <i class="fa-solid fa-user-shield" style="color: var(--accent);"></i>
+            <h3>Проверка чеков</h3>
+            <p>Панель администратора для проверки загруженных чеков</p>
         </a>
-        <a href="/dorm_services" class="module-card">
-            <i class="fa-solid fa-building-user"></i>
-            <h3>Общага.Услуги</h3>
-            <p>Сервисы для проживающих в общежитии</p>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+        <a href="/submit_receipt" class="module-card">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <h3>Подать чек</h3>
+            <p>Отправить платежное поручение об оплате общежития на проверку</p>
         </a>
+        {% else %}
+        <div class="module-card" style="opacity: 0.6; cursor: not-allowed;">
+            <i class="fa-solid fa-lock"></i>
+            <h3>Подать чек</h3>
+            <p>Войдите в аккаунт, чтобы воспользоваться этой услугой</p>
+        </div>
+        {% endif %}
     </div>
 
     <script>

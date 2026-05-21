@@ -1,0 +1,11 @@
+{
+  "pythonVersion": "3.14",
+  "pythonPath": "/usr/bin/python3",
+  "extraPaths": [
+    "/home/pivo/.local/lib/python3.14/site-packages",
+    "/usr/lib/python3.14/site-packages"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false
+}

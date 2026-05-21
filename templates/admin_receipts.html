@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель: Проверка чеков - Гунер.рф</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #f8faff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(108, 92, 231, 0.1);
+            --border: #e2e8f0;
+        }
+
+        html.dark-mode {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --white: #1e293b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            color: var(--primary);
+        }
+
+        .title {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2rem;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .receipt-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .receipt-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .receipt-info p {
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .receipt-info .meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .excel-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .excel-visual-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            background: var(--border);
+            padding: 2px;
+            border-radius: 8px;
+            cursor: copy;
+            border: 2px dashed var(--primary);
+            transition: 0.3s;
+        }
+
+        .excel-visual-box:hover {
+            border-style: solid;
+            background: var(--primary-light);
+        }
+
+        .excel-visual-box:hover .excel-visual-cell {
+            background: var(--white);
+            color: var(--primary);
+        }
+
+        .excel-visual-cell {
+            background: var(--bg);
+            padding: 10px 15px;
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+
+        .error-msg {
+            color: #ff7675;
+            font-weight: bold;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1px;
+            background: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .data-grid-label,
+        .data-grid-value {
+            padding: 12px 16px;
+            background: var(--bg);
+            font-size: 0.95rem;
+        }
+
+        .data-grid-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-right: 1px solid var(--border);
+        }
+
+        .data-grid-value {
+            color: var(--text);
+            font-weight: 700;
+            background: var(--white);
+        }
+
+        @media (max-width: 768px) {
+            .receipt-card {
+                grid-template-columns: 1fr;
+            }
+            .excel-visual-cell {
+                font-size: 0.85rem;
+                padding: 8px 10px;
+            }
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/dorm_services" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Назад</a>
+            <button onclick="toggleTheme()" class="btn-back"
+                style="background: none; border: none; cursor: pointer; font-size: 1.2rem;" id="themeBtn">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+
+        <h1 class="title"><i class="fa-solid fa-user-shield"></i> Проверка загруженных чеков</h1>
+
+        {% if receipts|length == 0 %}
+        <div style="text-align: center; color: var(--text-secondary); padding: 50px;">
+            <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 20px; color: var(--border);"></i>
+            <h2>Пока нет отправленных чеков</h2>
+        </div>
+        {% endif %}
+
+        {% for r in receipts %}
+        <div class="receipt-card">
+            <div class="receipt-info">
+                <h3>Заявка от пользователя: {{ r.user }}</h3>
+                <p class="meta"><strong>Период оплаты:</strong> {{ r.period }}</p>
+                <p class="meta"><strong>Отправлено:</strong> {{ r.created_at }}</p>
+                <p style="margin-top: 10px;">
+                    <a href="/uploads/receipts/{{ r.filename }}" target="_blank"
+                        style="display: inline-flex; align-items: center; gap: 5px; color: var(--primary); text-decoration: none; font-weight: bold;">
+                        <i class="fa-solid fa-file-pdf"></i> Посмотреть файл
+                    </a>
+                </p>
+                <hr style="border: none; border-top: 1px solid var(--border); margin: 10px 0;">
+
+                {% if r.parsed.error %}
+                <p class="error-msg"><i class="fa-solid fa-triangle-exclamation"></i> Ошибка парсинга: {{ r.parsed.error
+                    }}</p>
+                {% else %}
+                <div class="data-grid">
+                    <div class="data-grid-label">ФИО:</div>
+                    <div class="data-grid-value">{{ r.parsed.fio }}</div>
+
+                    <div class="data-grid-label">Дата:</div>
+                    <div class="data-grid-value">{{ r.parsed.date }}</div>
+
+                    <div class="data-grid-label">Сумма:</div>
+                    <div class="data-grid-value">{{ r.parsed.amount }} ₽</div>
+
+                    <div class="data-grid-label">Месяцев:</div>
+                    <div class="data-grid-value">{{ r.parsed.months }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="excel-box">
+                {% if not r.parsed.error %}
+                <label style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Кликните по ячейкам,
+                    чтобы скопировать строку для Excel:</label>
+                <div class="excel-visual-box"
+                    onclick="navigator.clipboard.writeText('{{ r.parsed.excel_string }}').then(() => alert('Строка скопирована в буфер обмена!'));"
+                    title="Нажмите, чтобы скопировать">
+                    {% for item in r.parsed.excel_string.split('\t') %}
+                    <div class="excel-visual-cell">{{ item }}</div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; color: var(--text-secondary);">
+                    Невозможно сгенерировать строку Excel из-за ошибки в файле.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.querySelector('#themeBtn i');
+            html.classList.toggle('dark-mode');
+            if (html.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.classList.contains('dark-mode')) {
+                document.querySelector('#themeBtn i').className = 'fa-solid fa-sun';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -10,4 +10,18 @@ node_modules/
 
 # Локальные переменные окружения и ключи
 *.env
+.env
 instance/schedules.db
+
+# Секреты OAuth2 Google
+credentials.json
+gmail_token.json
+
+# Базы данных и скрипты
+*.db
+*.sqlite
+make_admin.py
+create_user.py
+
+# Загруженные файлы пользователей
+uploads/
