@@ -69,7 +69,7 @@ def dorm_services():
     parsed_receipt = request.args.get('parsed_receipt')  # Will be handled via session or just re-rendered
     return render_template('dorm_services.html')
 
-def parse_receipt_data(pdf_bytes):
+def parse_receipt_data(pdf_bytes, period_str=""):
     try:
         reader = PdfReader(io.BytesIO(pdf_bytes))
         text = ""
@@ -79,38 +79,145 @@ def parse_receipt_data(pdf_bytes):
         date_match = re.search(r'\b(\d{2}\.\d{2}\.\d{4})\b', text)
         date = date_match.group(1) if date_match else "Дата не найдена"
         
-        amount_val = 0
-        multiples = [7800 * i for i in range(1, 10)]
-        for m in sorted(multiples, reverse=True):
-            if str(m) in text.replace(' ', ''):
-                amount_val = m
-                break
-                
-        if amount_val == 0:
-            amount_match = re.search(r'(?:Сумма|Итого).*?(?:[:\s])?([\d\s]+(?:[.,]\d+)?)\s*(?:руб|₽|RUB)', text, re.IGNORECASE)
-            if not amount_match:
-                amount_match = re.search(r'([\d\s]{4,}(?:[.,]\d{2})?)', text) 
-            if amount_match:
-                amount_str = amount_match.group(1).replace(' ', '').replace(',', '.')
-                amount_val = float(amount_str)
-                
-        months_count = int(amount_val // 7800) if amount_val >= 7800 else 1
+        # --- Ищем ВСЕ суммы из платёжных поручений ---
+        def _parse_amount(s: str) -> float:
+            try:
+                return float(s.replace(' ', '').replace('\xa0', '').replace(',', '.').replace('-', '.'))
+            except ValueError:
+                return 0.0
+
+        all_amounts_raw = re.findall(
+            r'(?:Сумма|Итого)(?:\s*платежа)?\s*[:\n]?\s*(\d[\d\s\xa0]{1,15}(?:[.,]\d{2})?)',
+            text, re.IGNORECASE
+        )
+        # 🐾 Сбер: сумма стоит ДО слова "Сумма платежа" (напр. "64 000,00Сумма платежа")
+        sber_amounts_raw = re.findall(
+            r'([\d\s\xa0]+[,.]\d{2})\s*Сумма\s*платежа',
+            text, re.IGNORECASE
+        )
+        all_amounts_raw = all_amounts_raw + sber_amounts_raw
+        parsed_amounts = [_parse_amount(a) for a in all_amounts_raw if _parse_amount(a) > 100]
+
+        # Ищем дату рядом с "Вид платежа" по строкам (это правильная дата платежа, не дата документа)
+        # Стратегия приоритетов:
+        #   1. Дата на той же строке, что и "Вид платежа"
+        #   2. Дата на соседних строках (±3 строки)
+        #   3. Дата в окне 300 символов ТОЛЬКО ПОСЛЕ "Вид платежа" (не до!)
+        #   4. Fallback: первая дата документа
+        payment_dates: list[str] = []
+        text_lines = text.splitlines()
+
+        # 🐾 Сбер: дата указана после "Дата операции"
+        sber_date_match = re.search(r'Дата\s+операции[\s\S]{0,30}?(\d{2}\.\d{2}\.\d{4})', text, re.IGNORECASE)
+        if sber_date_match:
+            payment_dates.append(sber_date_match.group(1))
+
+        for m in re.finditer(r'Вид\s+платежа', text, re.IGNORECASE):
+            found_date: str | None = None
+
+            # 1. Ищем дату на той же строке
+            line_start = text.rfind('\n', 0, m.start()) + 1
+            line_end = text.find('\n', m.end())
+            if line_end == -1:
+                line_end = len(text)
+            same_line = text[line_start:line_end]
+            d_match = re.search(r'\b(\d{2}\.\d{2}\.\d{4})\b', same_line)
+            if d_match:
+                found_date = d_match.group(1)
+
+            # 2. Ищем дату на ±3 соседних строках (сначала после, потом до)
+            if not found_date:
+                # Номер строки с "Вид платежа"
+                line_no = text[:m.start()].count('\n')
+                # Сначала смотрим строки ПОСЛЕ (они "нижние")
+                for offset in [1, 2, 3, -1, -2, -3]:
+                    idx = line_no + offset
+                    if 0 <= idx < len(text_lines):
+                        d_match = re.search(r'\b(\d{2}\.\d{2}\.\d{4})\b', text_lines[idx])
+                        if d_match:
+                            found_date = d_match.group(1)
+                            break
+
+            # 3. Широкое окно, но ТОЛЬКО после "Вид платежа"
+            if not found_date:
+                after_window = text[m.end(): min(len(text), m.end() + 500)]
+                d_match = re.search(r'\b(\d{2}\.\d{2}\.\d{4})\b', after_window)
+                if d_match:
+                    found_date = d_match.group(1)
+
+            if found_date:
+                payment_dates.append(found_date)
+
+        # Если "Вид платежа" вообще не нашли — берём все уникальные даты как запасной вариант
+        all_dates_found = list(dict.fromkeys(re.findall(r'\b(\d{2}\.\d{2}\.\d{4})\b', text)))
+        dates_to_use = payment_dates if payment_dates else all_dates_found
+
+
+        amount_val = sum(parsed_amounts) if parsed_amounts else 0.0
+
+        # --- Считаем кол-во месяцев и месячную ставку из period_str ---
+        months_count = 1
+        found_months: list[int] = []
+        found_years: list[int] = []
+        if period_str:
+            month_names = {
+                "январь": 1, "февраль": 2, "март": 3, "апрель": 4, "май": 5, "июнь": 6,
+                "июль": 7, "август": 8, "сентябрь": 9, "октябрь": 10, "ноябрь": 11, "декабрь": 12
+            }
+            for word in period_str.replace('-', ' - ').split():
+                word_lower = word.lower().strip(',.')
+                if word_lower in month_names:
+                    found_months.append(month_names[word_lower])
+                elif re.fullmatch(r'20\d{2}', word_lower):
+                    found_years.append(int(word_lower))
+            if len(found_months) >= 2:
+                start_m, end_m = found_months[0], found_months[-1]
+                if len(found_years) >= 2:
+                    start_y, end_y = found_years[0], found_years[-1]
+                elif len(found_years) == 1:
+                    start_y = end_y = found_years[0]
+                else:
+                    start_y = end_y = 2026
+                calc_months = (end_y - start_y) * 12 + (end_m - start_m) + 1
+                if 1 <= calc_months <= 60:
+                    months_count = calc_months
+
+        monthly_amount = int(amount_val // months_count) if amount_val > 0 and months_count > 0 else 0
+
         excel_cells = []
-        for _ in range(months_count):
-            excel_cells.append(f"{date} 7800")
-            
+
+        if parsed_amounts and monthly_amount > 0:
+            # Единая логика для 1 и нескольких поручений:
+            # для каждого поручения повторяем его дату N раз, где N = round(сумма / единица_оплаты)
+            for i, amt in enumerate(parsed_amounts):
+                d = dates_to_use[i] if i < len(dates_to_use) else (dates_to_use[-1] if dates_to_use else date)
+                n_months = max(1, round(amt / monthly_amount))
+                for _ in range(n_months):
+                    excel_cells.append(f"{d} {monthly_amount}")
+        else:
+            # Крайний случай: сумму не нашли — одна пустая ячейка с датой документа
+            for _ in range(months_count):
+                excel_cells.append(f"{date} {monthly_amount}")
+
         excel_string = "\t".join(excel_cells)
+
+
         
         fio = "ФИО не найдено"
         text_flat = text.replace('\n', ' ')
         lines = text.split('\n')
         
-        # 1. Сначала ищем по характерным окончаниям отчества (вич/вна/ич/ична) - работает в 99% случаев для РФ
-        match_patronymic = re.search(r'\b([А-ЯЁ][а-яёА-ЯЁ]+)\s+([А-ЯЁ][а-яёА-ЯЁ]+)\s+([А-ЯЁ][а-яёА-ЯЁ]+(?:вич|вна|ич|ична))\b', text_flat)
-        if match_patronymic:
-            fio = match_patronymic.group(0).title()
+        # 1. 🐾 Сбер: ФИО после метки "ФИО" в ВЕРХНЕМ регистре
+        sber_fio_match = re.search(r'\bФИО\s*\n([А-ЯЁ][А-ЯЁЁ ]+)', text)
+        if sber_fio_match:
+            fio = sber_fio_match.group(1).strip().title()
         else:
-            # 2. Если не нашли, ищем по ключевым словам (для иностранных студентов или нестандартных чеков)
+            # 2. Ищем по характерным окончаниям отчества (вич/вна/ич/ична) - в смешанном регистре
+            match_patronymic = re.search(r'\b([А-ЯЁ][а-яёА-ЯЁ]+)\s+([А-ЯЁ][а-яёА-ЯЁ]+)\s+([А-ЯЁ][а-яёА-ЯЁ]+(?:вич|вна|ич|ична))\b', text_flat)
+            if match_patronymic:
+                fio = match_patronymic.group(0).title()
+        if fio == "ФИО не найдено":
+            # 3. Если не нашли, ищем по ключевым словам (для иностранных студентов или нестандартных чеков)
             stop_words = r'(?i:Банк|ПАО|АО|ООО|БИК|Счет|ИНН|КПП|Росси|УГУ|ГУ|Отделение|Филиал|Управлени|ОГРН|К/С|Р/С|Корр|Бизнес)'
             
             for i, line in enumerate(lines):
@@ -128,16 +235,37 @@ def parse_receipt_data(pdf_bytes):
                     
                     if i + 1 < len(lines):
                         next_line = lines[i+1]
-                        matches_next = re.findall(r'([А-ЯЁ][а-яёА-ЯЁ]+(?:\s+[А-ЯЁ][а-яёА-ЯЁ]+){1,2})', next_line)
+                        # 🐾 Сбер: ФИО может быть в ВЕРХНЕМ регистре на следующей строке
+                        matches_next = re.findall(r'([А-ЯЁ][а-яёА-ЯЁ]+(?:\s+[А-ЯЁ][а-яёА-ЯЁ]+){1,2}|[А-ЯЁ]{2,}(?:\s+[А-ЯЁ]{2,}){1,2})', next_line)
                         for m in matches_next:
                             if not re.search(stop_words, m) and not re.search(r'(?i:ФИО|Плательщик|Отправитель|Клиент)', m):
-                                fio = m.title()
+                                fio = m.strip().title()
                                 found_valid = True
                                 break
                     if found_valid: break
         
+        room_match = re.search(r'(?i)(?:комн(?:ат[а-я]+)?\.?|ком\.?|\bк\.)\s*№?\s*(\d{1,4}[а-яА-Яa-zA-Z]?)', text_flat)
+        if not room_match:
+            room_match = re.search(r'(?i)\b(?:ком|комн|к)\s+№?\s*(\d{1,4}[а-яА-Яa-zA-Z]?)\b', text_flat)
+            
+        if room_match:
+            room = room_match.group(1).upper()
+        else:
+            room = "Не найдена"
+            if fio != "ФИО не найдено":
+                fio_pattern = r'\s+'.join(re.escape(p) for p in fio.split())
+                for fallback_match in re.finditer(r'(?<![\d.])\b(\d{1,4}[а-яА-Яa-zA-Z]?)\s*(?:[.,\-/]?\s*)*' + fio_pattern, text_flat, re.IGNORECASE):
+                    val = fallback_match.group(1).upper()
+                    # Исключаем ложные срабатывания от копеек (например, 23400-00 ФИО)
+                    if not re.fullmatch(r'0+[А-ЯA-Z]?', val):
+                        room = val
+                        # Предпочитаем совпадение, состоящее не только из одной цифры (если есть выбор), 
+                        # но в целом берём первое нормальное
+                        break
+        
         return {
             "fio": fio,
+            "room": room,
             "date": date,
             "amount": amount_val,
             "months": months_count,
@@ -146,6 +274,8 @@ def parse_receipt_data(pdf_bytes):
         }
     except Exception as e:
         return {"error": str(e)}
+
+RECEIPTS_CACHE = {}
 
 @app.route('/admin_receipts')
 @login_required
@@ -160,25 +290,64 @@ def admin_receipts():
     for r in receipts_db:
         parsed = {"error": "Файл не найден"}
         if os.path.exists(r.filename):
-            with open(r.filename, 'rb') as f:
-                parsed = parse_receipt_data(f.read())
+            mtime = os.path.getmtime(r.filename)
+            if r.filename in RECEIPTS_CACHE:
+                cached_mtime, cached_parsed = RECEIPTS_CACHE[r.filename]
+                if cached_mtime == mtime:
+                    parsed = cached_parsed
+            
+            if parsed.get("error") == "Файл не найден":
+                with open(r.filename, 'rb') as f:
+                    parsed = parse_receipt_data(f.read(), r.period)
+                RECEIPTS_CACHE[r.filename] = (mtime, parsed)
+                
                 
         receipts_data.append({
             "id": r.id,
             "user": r.user.username,
             "period": r.period,
+            "status": r.status,
+            "comment": r.comment,
             "created_at": r.created_at.strftime("%d.%m.%Y %H:%M"),
+            "created_at_iso": r.created_at.strftime("%Y-%m-%dT%H:%M:%S"),
             "parsed": parsed,
             "filename": os.path.basename(r.filename)
         })
         
     return render_template('admin_receipts.html', receipts=receipts_data)
 
+@app.route('/update_receipt_status/<int:receipt_id>', methods=['POST'])
+@login_required
+def update_receipt_status(receipt_id):
+    if not current_user.is_admin:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return {'ok': False, 'error': 'Нет прав'}, 403
+        flash('У вас нет прав для этого действия', 'danger')
+        return redirect(url_for('admin_receipts'))
+        
+    receipt = Receipt.query.get_or_404(receipt_id)
+    status = request.form.get('status')
+    comment = request.form.get('comment', '')
+    
+    if status in ['На проверке', 'Проверено', 'Отклонена']:
+        receipt.status = status
+    receipt.comment = comment
+        
+    db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from flask import jsonify
+        return jsonify({'ok': True, 'status': receipt.status})
+    
+    flash('Статус заявки обновлён.', 'admin_success')
+    return redirect(url_for('admin_receipts'))
+
 @app.route('/uploads/receipts/<path:filename>')
 @login_required
 def serve_receipt(filename):
-    if not current_user.is_admin:
-        flash('У вас нет прав для этого действия', 'danger')
+    receipt = Receipt.query.filter_by(filename=os.path.join('uploads', 'receipts', filename)).first()
+    if not current_user.is_admin and (not receipt or receipt.user_id != current_user.id):
+        flash('У вас нет прав для просмотра этого файла', 'danger')
         return redirect(url_for('dorm_services'))
     return send_from_directory(os.path.join(app.root_path, 'uploads', 'receipts'), filename)
 
@@ -189,8 +358,13 @@ def submit_receipt():
         period = request.form.get('period')
         receipt = request.files.get('receipt')
         
-        if not period or not receipt or receipt.filename == '':
-            flash('Пожалуйста, заполните период и выберите файл.', 'danger')
+        filename = getattr(receipt, 'filename', '') or ''
+        if not period or not receipt or not filename:
+            flash('Пожалуйста, заполните период и выберите файл.', 'form_danger')
+            return redirect(url_for('submit_receipt'))
+            
+        if not filename.lower().endswith('.pdf'):
+            flash('Квитанция должна быть только в формате PDF.', 'form_danger')
             return redirect(url_for('submit_receipt'))
             
         filename = f"receipt_{current_user.id}_{uuid.uuid4().hex[:8]}.pdf"
@@ -201,10 +375,66 @@ def submit_receipt():
         db.session.add(new_receipt)
         db.session.commit()
         
-        flash('Ваш чек за период "' + period + '" успешно отправлен на проверку!', 'success')
-        return redirect(url_for('dorm_services'))
+        flash('Квитанция успешно загружена и отправлена на проверку!', 'form_success')
+        return redirect(url_for('profile'))
         
     return render_template('submit_receipt.html')
+
+@app.route('/delete_receipt/<int:receipt_id>', methods=['POST'])
+@login_required
+def delete_receipt(receipt_id):
+    receipt = Receipt.query.get_or_404(receipt_id)
+    if receipt.user_id != current_user.id:
+        flash('У вас нет прав для этого действия.', 'danger')
+        return redirect(url_for('profile'))
+    if receipt.status == 'Проверено':
+        flash('Нельзя удалить уже проверенную заявку.', 'danger')
+        return redirect(url_for('profile'))
+    if os.path.exists(receipt.filename):
+        os.remove(receipt.filename)
+    db.session.delete(receipt)
+    db.session.commit()
+    flash('Заявка успешно удалена.', 'profile_success')
+    return redirect(url_for('profile'))
+
+@app.route('/edit_receipt/<int:receipt_id>', methods=['GET', 'POST'])
+@login_required
+def edit_receipt(receipt_id):
+    receipt = Receipt.query.get_or_404(receipt_id)
+    if receipt.user_id != current_user.id:
+        flash('У вас нет прав для этого действия.', 'danger')
+        return redirect(url_for('profile'))
+    if receipt.status == 'Проверено':
+        flash('Нельзя редактировать уже проверенную заявку.', 'danger')
+        return redirect(url_for('profile'))
+    
+    if request.method == 'POST':
+        period = request.form.get('period')
+        new_file = request.files.get('receipt')
+        
+        if period:
+            receipt.period = period
+        
+        file_obj = new_file
+        orig_name = getattr(file_obj, 'filename', '') or ''
+        if orig_name and file_obj is not None:
+            if not orig_name.lower().endswith('.pdf'):
+                flash('Квитанция должна быть только в формате PDF.', 'danger')
+                return redirect(url_for('edit_receipt', receipt_id=receipt_id))
+            if os.path.exists(receipt.filename):
+                os.remove(receipt.filename)
+            new_filename = f"receipt_{current_user.id}_{uuid.uuid4().hex[:8]}.pdf"
+            new_filepath = os.path.join('uploads', 'receipts', new_filename)
+            file_obj.save(new_filepath)
+            receipt.filename = new_filepath
+        
+        receipt.status = 'На проверке'
+        receipt.comment = None
+        db.session.commit()
+        flash('Заявка обновлена и отправлена на повторную проверку!', 'profile_success')
+        return redirect(url_for('profile'))
+    
+    return render_template('edit_receipt.html', receipt=receipt)
 
 @app.route('/schedule')
 def schedule():
@@ -340,8 +570,18 @@ def register():
             
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
-            flash('Пользователь с таким именем или почтой уже существует.', 'danger')
-            return redirect(url_for('register'))
+            if existing_user.is_confirmed:
+                flash('Пользователь с таким именем или почтой уже существует.', 'danger')
+                return redirect(url_for('register'))
+            else:
+                # Аккаунт есть, но не подтверждён — обновляем данные и шлём письмо повторно
+                existing_user.username = username
+                existing_user.email = email
+                existing_user.password_hash = generate_password_hash(password)
+                db.session.commit()
+                send_confirmation_email(existing_user.email)
+                flash('Письмо с подтверждением отправлено повторно! Проверь почту.', 'success')
+                return redirect(url_for('login'))
             
         hashed_password = generate_password_hash(password)
         new_user = User(username=username, email=email, password_hash=hashed_password, is_confirmed=False)
@@ -386,7 +626,8 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    user_receipts = Receipt.query.filter_by(user_id=current_user.id).order_by(Receipt.created_at.desc()).all()
+    return render_template('profile.html', receipts=user_receipts)
 
 _SCHEDULE_CACHE = {}
 
@@ -528,6 +769,9 @@ def render_schedule_page(schedule_type):
                     if vals[0] and any(ind in vals[0].lower() for ind in ['(лек)', 'лекция', 'лек.']):
                         if all(v == "" for v in vals[1:]):
                             is_merged_across = True
+                    # Если текст во всех подгруппах абсолютно одинаковый, объединяем их в одну пару
+                    elif len(set(vals)) == 1 and vals[0] != "":
+                        is_merged_across = True
                             
                 if all(v == "" for v in vals):
                     cell_html = "<div class='window-slot'><i class='fa-solid fa-mug-hot'></i>Отдых</div>" # Окно (пар нет)
@@ -546,7 +790,16 @@ def render_schedule_page(schedule_type):
                     
                 row_data['cells'].append(cell_html)
                 
-            rows_to_render.append(row_data)
+            # Проверка на дубликаты (вертикальное объединение в Excel)
+            is_duplicate = False
+            if len(rows_to_render) > 0:
+                prev_row = rows_to_render[-1]
+                if prev_row['day'] == row_data['day'] and prev_row['time'] == row_data['time']:
+                    if prev_row['cells'] == row_data['cells']:
+                        is_duplicate = True
+            
+            if not is_duplicate:
+                rows_to_render.append(row_data)
 
     # 3. Рассчитываем rowspan для объединения ячеек "Дня недели"
     for i, row in enumerate(rows_to_render):

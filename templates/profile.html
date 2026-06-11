@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Личный кабинет — Гунер.рф</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
@@ -172,6 +173,139 @@
             border: 1px solid rgba(255, 118, 117, 0.4);
         }
 
+        /* RECEIPTS HISTORY */
+        .receipt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .receipt-item {
+            background: var(--input-bg);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: 0.3s;
+        }
+
+        .receipt-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.08);
+        }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .receipt-period {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .receipt-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .cool-badge {
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pending {
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .badge-approved {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+        }
+
+        .badge-rejected {
+            background: linear-gradient(135deg, #ff0844 0%, #ff7675 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 8, 68, 0.3);
+        }
+
+        .rejection-reason {
+            background: rgba(255, 8, 68, 0.05);
+            border-left: 4px solid #ff4757;
+            padding: 12px 15px;
+            border-radius: 0 10px 10px 0;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        
+        .rejection-reason strong {
+            color: #ff4757;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .receipt-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn-edit {
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .btn-delete:hover {
+            background: #ff4757;
+            color: white;
+            transform: translateY(-1px);
+        }
+
         /* CARDS */
         .content {
             max-width: 700px;
@@ -308,6 +442,68 @@
             {% endif %}
         </div>
 
+        {% if receipts %}
+        <!-- История заявок -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> История заявок на оплату</div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            {% if category == 'profile_success' or (category == 'success' and not loop.first) %}
+            <div style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 10px 16px; border-radius: 10px; margin-bottom: 15px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-circle-check"></i> {{ message }}
+            </div>
+            {% elif category == 'profile_danger' %}
+            <div style="background: linear-gradient(135deg, #ff0844, #ff7675); color: white; padding: 10px 16px; border-radius: 10px; margin-bottom: 15px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-circle-xmark"></i> {{ message }}
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endwith %}
+
+            <div class="receipt-list">
+                {% for r in receipts %}
+                <div class="receipt-item">
+                    <div class="receipt-header">
+                        <div>
+                            <div class="receipt-period">{{ r.period }}</div>
+                            <div class="receipt-date" data-utc="{{ r.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">Отправлено: {{ r.created_at.strftime("%d.%m.%Y %H:%M") }}</div>
+                        </div>
+                        
+                        {% if r.status == 'Проверено' %}
+                        <div class="cool-badge badge-approved"><i class="fa-solid fa-circle-check"></i> {{ r.status }}</div>
+                        {% elif r.status == 'Отклонена' %}
+                        <div class="cool-badge badge-rejected"><i class="fa-solid fa-circle-xmark"></i> {{ r.status }}</div>
+                        {% else %}
+                        <div class="cool-badge badge-pending"><i class="fa-solid fa-hourglass-half"></i> {{ r.status }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if r.status == 'Отклонена' and r.comment %}
+                    <div class="rejection-reason">
+                        <strong>Причина отказа:</strong>
+                        {{ r.comment }}
+                    </div>
+                    {% endif %}
+
+                    {% if r.status != 'Проверено' %}
+                    <div class="receipt-actions">
+                        <a href="/edit_receipt/{{ r.id }}" class="btn-action btn-edit">
+                            <i class="fa-solid fa-pen-to-square"></i> Изменить
+                        </a>
+                        <form method="POST" action="/delete_receipt/{{ r.id }}" onsubmit="return confirm('Удалить заявку за {{ r.period }}?')">
+                            <button type="submit" class="btn-action btn-delete">
+                                <i class="fa-solid fa-trash"></i> Удалить
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Выход -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-right-from-bracket"></i> Сессия</div>
@@ -337,6 +533,14 @@
             if (document.documentElement.classList.contains('dark-mode')) {
                 document.querySelector('#themeBtn i').classList.replace('fa-moon', 'fa-sun');
             }
+
+            // Переводим время всех чеков в локальное время устройства
+            document.querySelectorAll('.receipt-date[data-utc]').forEach(el => {
+                const utc = new Date(el.dataset.utc);
+                const pad = n => String(n).padStart(2, '0');
+                const local = `${pad(utc.getDate())}.${pad(utc.getMonth()+1)}.${utc.getFullYear()} ${pad(utc.getHours())}:${pad(utc.getMinutes())}`;
+                el.textContent = 'Отправлено: ' + local;
+            });
         });
     </script>
 </body>

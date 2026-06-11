@@ -36,6 +36,8 @@ class Receipt(db.Model):
     period = db.Column(db.String(100), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.now())
+    status = db.Column(db.String(50), default="На проверке")
+    comment = db.Column(db.Text, nullable=True)
     
     user = db.relationship('User', backref=db.backref('receipts', lazy=True))
 

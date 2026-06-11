@@ -98,7 +98,9 @@ def parse_xlsx_schedule(filepath, filename):
     try:
         wb = openpyxl.load_workbook(filepath, data_only=True)
         ws = wb.active
-        
+        if not ws:
+            return [], {}
+            
         # 🐾 НАСТРОЙКИ СТРОК: 
         if 'экзамен' in filename.lower():
             GROUP_ROW = 4

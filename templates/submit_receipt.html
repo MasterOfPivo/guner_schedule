@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Подача чека общаги - Гунер.рф</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap"
@@ -21,6 +22,7 @@
             --shadow: 0 15px 35px rgba(108, 92, 231, 0.15);
             --border: #e2e8f0;
             --input-bg: #f1f5f9;
+            color-scheme: light;
         }
 
         html.dark-mode {
@@ -31,6 +33,7 @@
             --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             --border: #334155;
             --input-bg: #0f172a;
+            color-scheme: dark;
         }
 
         * {
@@ -273,11 +276,123 @@
             transform: scale(1.05);
         }
 
+        .file-upload-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 2px dashed var(--primary-light);
+            border-radius: 15px;
+            background: var(--input-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .file-upload-wrapper:hover, .file-upload-wrapper.dragover {
+            background: rgba(108, 92, 231, 0.05);
+            border-color: var(--primary);
+        }
+
+        html.dark-mode .file-upload-wrapper:hover, html.dark-mode .file-upload-wrapper.dragover {
+            background: rgba(108, 92, 231, 0.15);
+        }
+
+        .file-upload-wrapper i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .file-upload-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .file-upload-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .file-upload-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .period-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .date-select-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .custom-select {
+            padding-left: 15px !important;
+            padding-right: 30px !important;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: var(--input-bg) url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23636e72' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 12px center / 14px !important;
+        }
+
+        html.dark-mode .custom-select {
+            background: var(--input-bg) url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 12px center / 14px !important;
+        }
+
+        .custom-select:valid {
+            color: var(--primary);
+            font-weight: 700;
+            border-color: var(--primary-light);
+            background-color: rgba(108, 92, 231, 0.05);
+        }
+
+        html.dark-mode .custom-select:valid {
+            background-color: rgba(108, 92, 231, 0.15);
+        }
+
+        .custom-select:invalid {
+            color: var(--text-secondary);
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
             }
         }
+
+        .flash-inline {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .flash-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .flash-danger  { background: linear-gradient(135deg, #ff0844, #ff7675); }
     </style>
     <script>
         if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
@@ -334,59 +449,100 @@
                 background-color: #3498db;
             }
         </style>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div id="flash-messages-container">
-            {% for category, message in messages %}
-            <div class="alert-custom alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        <script>
-            // Автоматически убираем сообщение через 5 секунд
-            setTimeout(() => {
-                const container = document.getElementById('flash-messages-container');
-                if (container) {
-                    container.style.transition = 'opacity 0.5s';
-                    container.style.opacity = '0';
-                    setTimeout(() => container.remove(), 500);
-                }
-            }, 5000);
-
-            // Убираем сообщение, если юзер вернулся на страницу кнопкой "Назад"
-            window.addEventListener('pageshow', (e) => {
-                if (e.persisted) {
-                    const container = document.getElementById('flash-messages-container');
-                    if (container) container.remove();
-                }
-            });
-        </script>
-        {% endif %}
-        {% endwith %}
 
         <form method="POST" action="{{ url_for('submit_receipt') }}" enctype="multipart/form-data">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            {% if category in ['form_success', 'form_danger', 'success', 'danger'] %}
+            {% if category == 'form_success' or category == 'success' %}
+            <div class="flash-inline flash-success">
+                <i class="fa-solid fa-circle-check"></i> {{ message }}
+            </div>
+            {% else %}
+            <div class="flash-inline flash-danger">
+                <i class="fa-solid fa-circle-xmark"></i> {{ message }}
+            </div>
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+            {% endwith %}
+
             <div class="form-group">
-                <label class="form-label">Период оплаты</label>
-                <div class="input-wrapper">
-                    <input type="text" name="period" class="form-input" placeholder="Сентябрь - Декабрь 2026" required>
-                    <i class="fa-solid fa-calendar-alt"></i>
+                <label class="form-label" style="margin-bottom: 12px;">Период оплаты</label>
+                <div class="period-inputs">
+                    <div class="period-block" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); padding-left: 5px;">С какого месяца:</div>
+                        <div class="date-select-group">
+                            <select id="start-month" class="form-input custom-select" required>
+                                <option value="" disabled selected>Месяц</option>
+                                <option value="01">Январь</option>
+                                <option value="02">Февраль</option>
+                                <option value="03">Март</option>
+                                <option value="04">Апрель</option>
+                                <option value="05">Май</option>
+                                <option value="06">Июнь</option>
+                                <option value="07">Июль</option>
+                                <option value="08">Август</option>
+                                <option value="09">Сентябрь</option>
+                                <option value="10">Октябрь</option>
+                                <option value="11">Ноябрь</option>
+                                <option value="12">Декабрь</option>
+                            </select>
+                            <select id="start-year" class="form-input custom-select" required>
+                                <option value="" disabled selected>Год</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="period-block" style="display: flex; flex-direction: column; gap: 6px; margin-top: 5px;">
+                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); padding-left: 5px;">По какой месяц:</div>
+                        <div class="date-select-group">
+                            <select id="end-month" class="form-input custom-select" required>
+                                <option value="" disabled selected>Месяц</option>
+                                <option value="01">Январь</option>
+                                <option value="02">Февраль</option>
+                                <option value="03">Март</option>
+                                <option value="04">Апрель</option>
+                                <option value="05">Май</option>
+                                <option value="06">Июнь</option>
+                                <option value="07">Июль</option>
+                                <option value="08">Август</option>
+                                <option value="09">Сентябрь</option>
+                                <option value="10">Октябрь</option>
+                                <option value="11">Ноябрь</option>
+                                <option value="12">Декабрь</option>
+                            </select>
+                            <select id="end-year" class="form-input custom-select" required>
+                                <option value="" disabled selected>Год</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
+                <input type="hidden" name="period" id="period-hidden" required>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Файл платежного поручения</label>
-                <div class="input-wrapper">
-                    <input type="file" name="receipt" class="form-input" accept=".pdf,image/*" required
-                        style="padding-left: 50px; padding-top: 11px;">
-                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                <div class="file-upload-wrapper" id="drop-zone">
+                    <input type="file" name="receipt" id="file-input" class="file-upload-input" accept=".pdf" required>
+                    <i class="fa-solid fa-cloud-arrow-up" id="file-icon"></i>
+                    <div class="file-upload-text" id="file-name">Выберите PDF-файл или перетащите его сюда</div>
+                    <div class="file-upload-hint">Только формат .pdf</div>
                 </div>
             </div>
 
             <button type="submit" class="btn-submit">Отправить на проверку</button>
         </form>
     </div>
-
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -410,6 +566,78 @@
                 btn.querySelector('i').classList.replace('fa-moon', 'fa-sun');
             }
         });
+
+        // Обработка выбора файла и Drag-and-Drop
+        const fileInput = document.getElementById('file-input');
+        const fileName = document.getElementById('file-name');
+        const fileIcon = document.getElementById('file-icon');
+        const dropZone = document.getElementById('drop-zone');
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fileName.textContent = e.target.files[0].name;
+                fileIcon.className = 'fa-solid fa-file-pdf';
+                fileIcon.style.color = '#ff4757'; // Красный цвет PDF
+            } else {
+                fileName.textContent = 'Выберите PDF-файл или перетащите его сюда';
+                fileIcon.className = 'fa-solid fa-cloud-arrow-up';
+                fileIcon.style.color = 'var(--primary)';
+            }
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        // Обработка периода
+        const startMonth = document.getElementById('start-month');
+        const startYear = document.getElementById('start-year');
+        const endMonth = document.getElementById('end-month');
+        const endYear = document.getElementById('end-year');
+        const periodHidden = document.getElementById('period-hidden');
+
+        function updatePeriod() {
+            if (startMonth.value && startYear.value && endMonth.value && endYear.value) {
+                const dateStart = new Date(`${startYear.value}-${startMonth.value}-01`);
+                const dateEnd = new Date(`${endYear.value}-${endMonth.value}-01`);
+                
+                if (dateEnd < dateStart) {
+                    endMonth.value = startMonth.value;
+                    endYear.value = startYear.value;
+                }
+                
+                const mStart = startMonth.options[startMonth.selectedIndex].text;
+                const mEnd = endMonth.options[endMonth.selectedIndex].text;
+                const yStart = startYear.value;
+                const yEnd = endYear.value;
+                
+                if (yStart === yEnd) {
+                    periodHidden.value = `${mStart} - ${mEnd} ${yStart}`;
+                } else {
+                    periodHidden.value = `${mStart} ${yStart} - ${mEnd} ${yEnd}`;
+                }
+            } else {
+                periodHidden.value = '';
+            }
+        }
+
+        startMonth.addEventListener('change', updatePeriod);
+        startYear.addEventListener('change', updatePeriod);
+        endMonth.addEventListener('change', updatePeriod);
+        endYear.addEventListener('change', updatePeriod);
     </script>
 </body>
 

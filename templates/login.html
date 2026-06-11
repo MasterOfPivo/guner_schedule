@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Вход - Гунер.рф</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Nunito:wght@800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -368,6 +369,21 @@
             .login-container {
                 padding: 30px 20px;
             }
+        }
+
+        .alert-custom {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .alert-success { background: var(--primary-light); }
+        .alert-danger { background: #ff7675; }
+        .alert-warning { background: #f39c12; }
+        .alert-info { background: #3498db; }
     </style>
     <script>
         if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
@@ -398,7 +414,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category }}" style="padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center; background: {{ 'var(--primary-light)' if category == 'success' else '#ff7675' }}; color: white; font-weight: 600; font-size: 0.9rem;">
+              <div class="alert alert-custom alert-{{ category }}">
                 {{ message }}
               </div>
             {% endfor %}
